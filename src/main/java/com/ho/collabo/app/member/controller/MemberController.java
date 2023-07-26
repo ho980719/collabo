@@ -19,7 +19,6 @@ public class MemberController {
 
     @PostMapping("/api/v1/members/login")
     public ResponseEntity login(@RequestBody MemberDto memberDto) {
-        memberService.login(memberDto);
-        return new ResponseEntity(HttpStatus.OK);
+        return new ResponseEntity(memberService.login(memberDto), HttpStatus.OK);
     }
 }

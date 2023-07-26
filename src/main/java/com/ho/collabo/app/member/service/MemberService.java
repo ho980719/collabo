@@ -27,8 +27,10 @@ public class MemberService {
         return new MemberDto(member);
     }
 
-    public void login(MemberDto memberDto) {
+    public MemberDto login(MemberDto memberDto) {
         Member member = memberRepository.findByLoginIdAndPassword(memberDto.getLoginId(), memberDto.getPassword())
                 .orElseThrow(RuntimeException::new);
+
+        return new MemberDto(member);
     }
 }

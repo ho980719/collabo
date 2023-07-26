@@ -1,47 +1,67 @@
 package com.ho.collabo.common.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.AuthenticationManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.MimeTypeUtils;
 
-public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+import java.io.IOException;
+import java.util.stream.Collectors;
 
-    private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER = new AntPathRequestMatcher(
-            "/api/v1/members/login",
-            "POST");
-
-    public CustomUsernamePasswordAuthenticationFilter() {
-        super(DEFAULT_ANT_PATH_REQUEST_MATCHER);
-    }
-
-    public CustomUsernamePasswordAuthenticationFilter(AuthenticationManager authenticationManager) {
-        super(DEFAULT_ANT_PATH_REQUEST_MATCHER, authenticationManager);
-    }
+@Slf4j
+public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException {
-        if (!request.getMethod().equals("POST")) {
-            throw new AuthenticationServiceException("Authentication method not supported: " + request.getMethod());
+    public Authentication attemptAuthentication(
+            HttpServletRequest request, HttpServletResponse response
+    ) throws AuthenticationException {
+        UsernamePasswordAuthenticationToken authenticationToken;
+        if (request.getContentType().equals(MimeTypeUtils.APPLICATION_JSON_VALUE)) {
+            // json request
+            try {
+                // read request body and mapping to login dto class by object mapper
+                LoginDto loginDto = objectMapper.readValue(
+                        request.getReader().lines().collect(Collectors.joining()), LoginDto.class);
+                authenticationToken = new UsernamePasswordAuthenticationToken(loginDto.username, loginDto.password);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new AuthenticationServiceException("Request Content-Type(application/json) Parsing Error");
+            }
+        } else {
+            // form-request
+            String username = obtainUsername(request);
+            String password = obtainPassword(request);
+            authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         }
-        String loginId = request.getParameter("loginId") == null ? "" : request.getParameter("loginId").trim();
-        String password = request.getParameter("password") == null ? "" : request.getParameter("password");
-        UsernamePasswordAuthenticationToken authRequest = UsernamePasswordAuthenticationToken.unauthenticated(loginId, password);
-        // Allow subclasses to set the "details" property
-
-        authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
-
-        return this.getAuthenticationManager().authenticate(authRequest);
+        this.setDetails(request, authenticationToken);
+        return this.getAuthenticationManager().authenticate(authenticationToken);
     }
 
-    @Override
-    protected AuthenticationManager getAuthenticationManager() {
-        return super.getAuthenticationManager();
+    class LoginDto {
+        private String username;
+        private String password;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
     }
 }
