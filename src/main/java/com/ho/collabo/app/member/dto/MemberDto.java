@@ -4,6 +4,7 @@ import com.ho.collabo.app.member.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +22,9 @@ public class MemberDto {
         this.password = member.getPassword();
     }
 
+
+    // 비밀번호 암호화 메소드
+    public String passwordEncode(PasswordEncoder passwordEncoder) {
+        return passwordEncoder.encode(this.password);
+    }
 }
