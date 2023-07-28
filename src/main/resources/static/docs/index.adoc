@@ -1,0 +1,4 @@
+= Spring REST Docs
+
+include::http-request.adoc[]
+include::http-response.adoc[]
