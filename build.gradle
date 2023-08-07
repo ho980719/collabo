@@ -13,8 +13,8 @@ java {
 }
 
 configurations {
+	asciidoctorExtensions // asciidoctorExtensions : Asciidoctor의 확장 기능을 사용하기 위한 설정
 	compileOnly {
-		asciidoctorExtensions // asciidoctorExtensions : Asciidoctor의 확장 기능을 사용하기 위한 설정
 		extendsFrom annotationProcessor
 	}
 }
